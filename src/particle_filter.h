@@ -12,7 +12,6 @@
 #include "helper_functions.h"
 
 struct Particle {
-
 	int id;
 	double x;
 	double y;
@@ -30,8 +29,6 @@ class ParticleFilter {
 	// Number of particles to draw
 	int num_particles; 
 	
-	
-	
 	// Flag, if filter is initialized
 	bool is_initialized;
 	
@@ -45,7 +42,7 @@ public:
 
 	// Constructor
 	// @param num_particles Number of particles
-	ParticleFilter() : num_particles(0), is_initialized(false) {}
+	ParticleFilter() : num_particles(5), is_initialized(false) {}
 
 	// Destructor
 	~ParticleFilter() {}
@@ -78,7 +75,7 @@ public:
 	 * @param predicted Vector of predicted landmark observations
 	 * @param observations Vector of landmark observations
 	 */
-	void dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations);
+	void dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations, double sensor_range);
 	
 	/**
 	 * updateWeights Updates the weights for each particle based on the likelihood of the 
