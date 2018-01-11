@@ -44,6 +44,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particles.push_back(sample_p);	
 	}    
 	is_initialized = true; 
+
 }
 
 
@@ -53,7 +54,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
-	
+
 	for (int i = 0; i < num_particles; ++i) {
 		particles[i].x = particles[i].x + ((velocity / yaw_rate) *  sin(particles[i].theta + yaw_rate * delta_t) - sin(particles[i].theta));
 		particles[i].y = particles[i].y + ((velocity / yaw_rate) * -cos(particles[i].theta + yaw_rate * delta_t) + sin(particles[i].theta));
@@ -68,7 +69,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 		particles[i].x = dist_x(gen);
 		particles[i].y = dist_y(gen);
 		particles[i].theta = dist_theta(gen);
-	}    
+	}
+
+
 }
 
 
@@ -108,6 +111,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	std::vector<LandmarkObs> landmark_observation;
 	std::vector<LandmarkObs> predicted;
+	double weight_sum = 0;
 	for (int i=0; i<num_particles; ++i){
 		double weight;
 		for (int j=0; j< observations.size(); ++j) {
@@ -125,36 +129,49 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			landmark_observation.push_back(map_landmark);
 		}
 
-		for (int i = 0; i < landmark_observation.size(); ++i) {
+		for (int m = 0; m < landmark_observation.size(); ++m) {
 			double min_distance;
 			double tmp_distance;
 			double mu_x;
 			double mu_y;
 			double p_x;
 			double p_y;
-			for(int j = 0; j < predicted.size(); ++j) {
+			for(int n = 0; n < predicted.size(); ++n) {
 				min_distance = sensor_range;
-				tmp_distance = dist(predicted[j].x, predicted[j].y, landmark_observation[i].x, landmark_observation[i].y);
+				tmp_distance = dist(predicted[n].x, predicted[n].y, landmark_observation[m].x, landmark_observation[m].y);
 				if(min_distance > tmp_distance){
 					min_distance = tmp_distance;
-					predicted[j].id = landmark_observation[i].id;
-					mu_x = landmark_observation[i].x;
-					mu_y = landmark_observation[i].y;
-					p_x = predicted[i].x;
-					p_y = predicted[i].y;
+					predicted[n].id = landmark_observation[m].id;
+					mu_x = landmark_observation[m].x;
+					mu_y = landmark_observation[m].y;
+					p_x = predicted[n].x;
+					p_y = predicted[n].y;
 				}
 			}
-
+			//cout << "num_particles = " << i << " ";
 			//calculate normalization term
 			double gauss_norm = (1/(2 * M_PI * std_landmark[0] * std_landmark[1]));
+			//cout << "gauss_norm = " << gauss_norm << " "; 
 			// calculate exponent
 			double exponent = (pow(p_x - mu_x, 2) / (2 * pow(std_landmark[0], 2)) + pow(p_y - mu_y, 2) / (2 * pow(std_landmark[1], 2)));
+			//cout << "p_x = " << p_x << " " << "m_x = " << mu_x << " ";
+			//cout << "exponent = " << exponent << " ";
+
 			// calculate weight using normalization terms and exponent
 			weight = gauss_norm * exp(-exponent);
+			//cout << "weight = " << weight << endl;
 			particles[i].weight *= weight;
 		}
 		weights.push_back(weight);
+		weight_sum += weight;
+		cout << "num_particles = " << i << " ";
+		cout << "weight = " << weight << endl;
 	}
+	
+
+//	cout << "x = " << particles[0].x << endl;
+//	cout << "weight = " << particles[0].weight << endl;
+
 }
 
 void ParticleFilter::resample() {
@@ -162,18 +179,19 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
-	for (int i=0; i<num_particles; ++i) {
-		weights.push_back(particles[i].weight);
+	std::default_random_engine generator;
+	std::discrete_distribution<int> dist(weights.begin(), weights.end());
+
+	std::vector<Particle> new_particles;
+	new_particles.reserve(particles.size());
+
+	for (int i = 0; i < particles.size(); i++) {
+		int sampled_index = dist(generator);
+		new_particles.push_back(particles[sampled_index]);
 	}
 
-	std::random_device rd;
-    std::mt19937 gen(rd());
-    std::discrete_distribution<> d(weights.begin(), weights.end());
-    std::vector<Particle> particles_new;
-    for(int n=0; n<num_particles; ++n) {
-        particles_new.push_back(particles[d(gen)]);
-    }
-	particles = particles_new;
+	particles = new_particles;
+
 }
 
 Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 

@@ -70,14 +70,17 @@ int main()
 		      }
           else {
             // Predict the vehicle's next state from previous (noiseless control) data.
+            cout << "test" << endl;
 		  	    double previous_velocity = std::stod(j[1]["previous_velocity"].get<std::string>());
 			      double previous_yawrate = std::stod(j[1]["previous_yawrate"].get<std::string>());
 
+            cout << "test" << endl;
             pf.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
 		      }
 
           // receive noisy observation data from the simulator
 		      // sense_observations in JSON format [{obs_x,obs_y},{obs_x,obs_y},...{obs_x,obs_y}]
+        
 		  	  vector<LandmarkObs> noisy_observations;
 		  	  string sense_observations_x = j[1]["sense_observations_x"];
 		  	  string sense_observations_y = j[1]["sense_observations_y"];
@@ -103,7 +106,7 @@ int main()
 				    obs.y = y_sense[i];
 				    noisy_observations.push_back(obs);
         	}
-
+          
 		      // Update the weights and resample
 		      pf.updateWeights(sensor_range, sigma_landmark, noisy_observations, map);
 		      pf.resample();
