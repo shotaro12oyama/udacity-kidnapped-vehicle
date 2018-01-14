@@ -205,8 +205,8 @@ void ParticleFilter::resample() {
 	std::vector<Particle> new_particles;
 
 	for (int i = 0; i < particles.size(); i++) {
-		int sampled_index = dist(gen);
-		new_particles.push_back(particles[sampled_index]);
+		int sample_index = dist(gen);
+		new_particles.push_back(particles[sample_index]);
 	}
 
 	particles = new_particles;
